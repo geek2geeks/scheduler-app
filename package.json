@@ -2,7 +2,7 @@
   "name": "presentation-booking",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://${REACT_APP_GITHUB_OWNER}.github.io/${REACT_APP_GITHUB_REPO}",
+  "homepage": "https://geek2geeks.github.io/scheduler-app",
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
