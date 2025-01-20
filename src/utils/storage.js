@@ -1,36 +1,30 @@
 import { getFileContent, updateFile } from './github';
 
 export const getSchedules = async () => {
+  // First check GitHub
   const result = await getFileContent();
-  return result?.content || [];
+  if (result?.content) {
+    return result.content;
+  }
+  // Fall back to localStorage if GitHub fetch fails
+  return JSON.parse(localStorage.getItem('pending_changes') || '[]');
 };
 
 export const saveSchedule = async (schedule) => {
-  const currentContent = await getFileContent();
+  const currentSchedules = await getSchedules();
   const newSchedule = { ...schedule, id: Date.now() };
-  const newContent = currentContent
-    ? [...currentContent.content, newSchedule]
-    : [newSchedule];
-    
-  await updateFile(
-    newContent,
-    currentContent?.sha,
-    `Add booking: ${schedule.name} for ${new Date(schedule.date).toLocaleDateString()}`
-  );
+  const newContent = [...currentSchedules, newSchedule];
+  
+  await updateFile(newContent);
   return newContent;
 };
 
 export const deleteSchedule = async (id) => {
-  const currentContent = await getFileContent();
-  if (!currentContent) return [];
-  
-  const bookingToDelete = currentContent.content.find(s => s.id === id);
-  const newContent = currentContent.content.filter(schedule => schedule.id !== id);
-  
-  await updateFile(
-    newContent,
-    currentContent.sha,
-    `Delete booking for ${bookingToDelete?.name || 'unknown'} on ${bookingToDelete ? new Date(bookingToDelete.date).toLocaleDateString() : 'unknown date'}`
+  const currentSchedules = await getSchedules();
+  const newContent = currentSchedules.filter(
+    schedule => schedule.id !== id
   );
+  
+  await updateFile(newContent);
   return newContent;
 };
