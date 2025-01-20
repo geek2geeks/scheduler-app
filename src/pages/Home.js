@@ -25,9 +25,9 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
-  CheckCircleOutlineIcon
+  TextField
 } from '@mui/material';
+import { CheckCircleOutline } from '@mui/icons-material';
 import { format, isSameDay } from 'date-fns';
 
 function Home() {
@@ -378,7 +378,7 @@ function Home() {
           <DialogContent>
             <Box sx={{ textAlign: 'center', py: 2 }}>
               <Zoom in={true}>
-                <CheckCircleOutlineIcon
+                <CheckCircleOutline
                   color="success"
                   sx={{ fontSize: 64, mb: 2 }}
                 />
