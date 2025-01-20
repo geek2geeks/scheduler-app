@@ -28,3 +28,18 @@ export const deleteSchedule = async (id) => {
   await updateFile(newContent);
   return newContent;
 };
+
+// Admin functions
+export const getPendingChanges = async () => {
+  const storedChanges = localStorage.getItem('pending_changes');
+  return storedChanges ? JSON.parse(storedChanges) : [];
+};
+
+export const clearPendingChanges = async () => {
+  localStorage.removeItem('pending_changes');
+};
+
+export const isPendingChangesPresent = async () => {
+  const changes = await getPendingChanges();
+  return changes.length > 0;
+};

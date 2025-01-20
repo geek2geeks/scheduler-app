@@ -4,8 +4,7 @@ import { Box, Container } from '@mui/material';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminPanel from './components/AdminPanel';
 import BookingConfirmation from './pages/BookingConfirmation';
 
 function App() {
@@ -15,8 +14,7 @@ function App() {
       <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/admin" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminPanel />} />
           <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         </Routes>
       </Container>
