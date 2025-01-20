@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getSchedules, saveSchedule, deleteSchedule } from '../utils/storage';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -42,15 +43,21 @@ function Home() {
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
   const [cancelledBooking, setCancelledBooking] = useState(null);
 
-  // Load bookings from localStorage on component mount
+  // Load bookings from GitHub on component mount
   useEffect(() => {
-    const savedBookings = localStorage.getItem('bookings');
-    if (savedBookings) {
-      setBookings(JSON.parse(savedBookings).map(booking => ({
-        ...booking,
-        date: new Date(booking.date)
-      })));
-    }
+    const fetchBookings = async () => {
+      try {
+        const savedBookings = await getSchedules();
+        setBookings(savedBookings.map(booking => ({
+          ...booking,
+          date: new Date(booking.date)
+        })));
+      } catch (error) {
+        console.error('Error loading bookings:', error);
+        // Could add error state and UI notification here
+      }
+    };
+    fetchBookings();
   }, []);
 
   // Define the three weeks
@@ -123,7 +130,7 @@ function Home() {
     }
   };
 
-  const handleBookingSubmit = () => {
+  const handleBookingSubmit = async () => {
     if (!bookingForm.name || !bookingForm.studentNumber) {
       return;
     }
@@ -135,29 +142,36 @@ function Home() {
       referenceCode: bookingCode,
     };
 
-    // Update bookings in state and localStorage
-    const updatedBookings = [...bookings, newBooking];
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
-    
-    // Navigate to confirmation page with booking details
-    navigate('/booking-confirmation', {
-      state: {
-        booking: newBooking,
-      },
-    });
+    try {
+      // Save to GitHub and update state
+      const updatedBookings = await saveSchedule(newBooking);
+      setBookings(updatedBookings.map(booking => ({
+        ...booking,
+        date: new Date(booking.date)
+      })));
+      
+      // Navigate to confirmation page with booking details
+      navigate('/booking-confirmation', {
+        state: {
+          booking: newBooking,
+        },
+      });
 
-    // Clear form data only after successful navigation
-    setOpenDialog(false);
-    setBookingForm({
-      name: '',
-      studentNumber: '',
-      company: '',
-      notes: '',
-    });
+      // Clear form data only after successful save
+      setOpenDialog(false);
+      setBookingForm({
+        name: '',
+        studentNumber: '',
+        company: '',
+        notes: '',
+      });
+    } catch (error) {
+      console.error('Error saving booking:', error);
+      // Could add error state and UI notification here
+    }
   };
 
-  const handleCancelBooking = () => {
+  const handleCancelBooking = async () => {
     const bookingToCancel = bookings.find(
       booking => booking.referenceCode === manageForm.referenceCode
     );
@@ -167,20 +181,25 @@ function Home() {
       return;
     }
 
-    // Store the cancelled booking details for the success message
-    setCancelledBooking(bookingToCancel);
+    try {
+      // Store the cancelled booking details for the success message
+      setCancelledBooking(bookingToCancel);
 
-    // Remove the booking
-    const updatedBookings = bookings.filter(
-      booking => booking.referenceCode !== manageForm.referenceCode
-    );
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+      // Remove the booking from GitHub
+      const updatedBookings = await deleteSchedule(bookingToCancel.id);
+      setBookings(updatedBookings.map(booking => ({
+        ...booking,
+        date: new Date(booking.date)
+      })));
 
-    // Close manage dialog and show success dialog
-    setOpenManageDialog(false);
-    setManageForm({ referenceCode: '' });
-    setOpenSuccessDialog(true);
+      // Close manage dialog and show success dialog
+      setOpenManageDialog(false);
+      setManageForm({ referenceCode: '' });
+      setOpenSuccessDialog(true);
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      setManageError('Failed to cancel booking. Please try again.');
+    }
   };
 
   const slots = generateTimeSlots(selectedDate);
