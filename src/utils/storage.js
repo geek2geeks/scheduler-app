@@ -1,45 +1,41 @@
-import { getFileContent, updateFile } from './github';
+import { updateBookings } from './github';
 
 export const getSchedules = async () => {
-  // First check GitHub
-  const result = await getFileContent();
-  if (result?.content) {
-    return result.content;
-  }
-  // Fall back to localStorage if GitHub fetch fails
-  return JSON.parse(localStorage.getItem('pending_changes') || '[]');
+  // Use localStorage as backup
+  return JSON.parse(localStorage.getItem('bookings') || '[]');
 };
 
 export const saveSchedule = async (schedule) => {
-  const currentSchedules = await getSchedules();
-  const newSchedule = { ...schedule, id: Date.now() };
-  const newContent = [...currentSchedules, newSchedule];
-  
-  await updateFile(newContent);
-  return newContent;
+  try {
+    const currentSchedules = await getSchedules();
+    const newSchedule = { ...schedule, id: Date.now() };
+    const newContent = [...currentSchedules, newSchedule];
+    
+    // Update GitHub immediately
+    await updateBookings(newContent, `Add booking: ${schedule.name}`);
+    
+    // Update local storage as backup
+    localStorage.setItem('bookings', JSON.stringify(newContent));
+    
+    return newContent;
+  } catch (error) {
+    throw new Error('Failed to save booking');
+  }
 };
 
 export const deleteSchedule = async (id) => {
-  const currentSchedules = await getSchedules();
-  const newContent = currentSchedules.filter(
-    schedule => schedule.id !== id
-  );
-  
-  await updateFile(newContent);
-  return newContent;
-};
-
-// Admin functions
-export const getPendingChanges = async () => {
-  const storedChanges = localStorage.getItem('pending_changes');
-  return storedChanges ? JSON.parse(storedChanges) : [];
-};
-
-export const clearPendingChanges = async () => {
-  localStorage.removeItem('pending_changes');
-};
-
-export const isPendingChangesPresent = async () => {
-  const changes = await getPendingChanges();
-  return changes.length > 0;
+  try {
+    const currentSchedules = await getSchedules();
+    const newContent = currentSchedules.filter(schedule => schedule.id !== id);
+    
+    // Update GitHub immediately
+    await updateBookings(newContent, `Delete booking ${id}`);
+    
+    // Update local storage as backup
+    localStorage.setItem('bookings', JSON.stringify(newContent));
+    
+    return newContent;
+  } catch (error) {
+    throw new Error('Failed to delete booking');
+  }
 };

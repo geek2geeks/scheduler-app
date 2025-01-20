@@ -2,33 +2,38 @@ const OWNER = 'geek2geeks';
 const REPO = 'scheduler-app';
 const FILE_PATH = 'data/bookings.json';
 
-const getAuthHeaders = () => {
+// We'll use GitHub OAuth App credentials
+const CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID;
+
+export const getAuthHeaders = () => {
+  const token = sessionStorage.getItem('github_token');
   return {
+    'Authorization': `Bearer ${token}`,
     'Accept': 'application/vnd.github.v3+json'
   };
 };
 
-export const getFileContent = async () => {
+export const updateBookings = async (bookings, message) => {
   try {
-    const response = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
+    // First get the current file to get its SHA
+    const currentFile = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
       headers: getAuthHeaders()
-    });
-    const data = await response.json();
-    if (response.status === 404) return null;
-    return {
-      content: JSON.parse(atob(data.content)),
-      sha: data.sha
-    };
-  } catch (error) {
-    console.error('Error fetching content:', error);
-    return null;
-  }
-};
+    }).then(res => res.json());
 
-// For write operations, we'll use GitHub's Web UI
-export const updateFile = async (content) => {
-  // Instead of writing directly, we'll store in localStorage temporarily
-  localStorage.setItem('pending_changes', JSON.stringify(content));
-  // Return true to maintain API compatibility
-  return true;
+    // Update the file
+    const response = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        message,
+        content: btoa(JSON.stringify(bookings, null, 2)),
+        sha: currentFile.sha
+      })
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Error updating bookings:', error);
+    throw error;
+  }
 };
