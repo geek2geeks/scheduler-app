@@ -1,41 +1,69 @@
-import { updateBookings } from './github';
+import { getBookings, updateBookings } from './github';
 
 export const getSchedules = async () => {
-  // Use localStorage as backup
-  return JSON.parse(localStorage.getItem('bookings') || '[]');
+  try {
+    // First try to get from GitHub
+    const { bookings } = await getBookings();
+    
+    // Update local cache
+    localStorage.setItem('bookings', JSON.stringify(bookings));
+    
+    return bookings;
+  } catch (error) {
+    console.error('Error fetching schedules:', error);
+    // Fallback to local cache
+    return JSON.parse(localStorage.getItem('bookings') || '[]');
+  }
 };
 
 export const saveSchedule = async (schedule) => {
   try {
-    const currentSchedules = await getSchedules();
+    // Get current bookings
+    const currentBookings = await getSchedules();
     const newSchedule = { ...schedule, id: Date.now() };
-    const newContent = [...currentSchedules, newSchedule];
     
-    // Update GitHub immediately
-    await updateBookings(newContent, `Add booking: ${schedule.name}`);
+    // Check for double booking
+    const isSlotTaken = currentBookings.some(booking => 
+      booking.date === schedule.date && booking.time === schedule.time
+    );
     
-    // Update local storage as backup
-    localStorage.setItem('bookings', JSON.stringify(newContent));
+    if (isSlotTaken) {
+      throw new Error('This slot has already been booked');
+    }
     
-    return newContent;
+    // Add new booking
+    const newBookings = [...currentBookings, newSchedule];
+    
+    // Update GitHub
+    await updateBookings(newBookings, `Add booking: ${schedule.name || 'Anonymous'}`);
+    
+    // Update local cache
+    localStorage.setItem('bookings', JSON.stringify(newBookings));
+    
+    return newBookings;
   } catch (error) {
-    throw new Error('Failed to save booking');
+    console.error('Error saving schedule:', error);
+    throw error;
   }
 };
 
 export const deleteSchedule = async (id) => {
   try {
-    const currentSchedules = await getSchedules();
-    const newContent = currentSchedules.filter(schedule => schedule.id !== id);
+    // Get current bookings
+    const currentBookings = await getSchedules();
     
-    // Update GitHub immediately
-    await updateBookings(newContent, `Delete booking ${id}`);
+    // Remove booking
+    const newBookings = currentBookings.filter(booking => booking.id !== id);
     
-    // Update local storage as backup
-    localStorage.setItem('bookings', JSON.stringify(newContent));
+    // Update GitHub
+    await updateBookings(newBookings, `Delete booking ${id}`);
     
-    return newContent;
+    // Update local cache
+    localStorage.setItem('bookings', JSON.stringify(newBookings));
+    
+    return newBookings;
   } catch (error) {
-    throw new Error('Failed to delete booking');
+    console.error('Error deleting schedule:', error);
+    throw error;
   }
 };
