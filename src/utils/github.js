@@ -2,9 +2,6 @@ const OWNER = 'geek2geeks';
 const REPO = 'scheduler-app';
 const FILE_PATH = 'data/bookings.json';
 
-// We'll use GitHub OAuth App credentials
-const CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID;
-
 export const getAuthHeaders = () => {
   const token = sessionStorage.getItem('github_token');
   return {
