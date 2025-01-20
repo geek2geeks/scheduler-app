@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/scheduler-app/static/js/main.8c94341d.js",
+    "main.js": "/scheduler-app/static/js/main.7d0cf619.js",
     "index.html": "/scheduler-app/index.html",
-    "main.8c94341d.js.map": "/scheduler-app/static/js/main.8c94341d.js.map"
+    "main.7d0cf619.js.map": "/scheduler-app/static/js/main.7d0cf619.js.map"
   },
   "entrypoints": [
-    "static/js/main.8c94341d.js"
+    "static/js/main.7d0cf619.js"
   ]
 }
