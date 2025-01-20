@@ -1,32 +1,156 @@
 import React, { useState, useEffect } from 'react';
 import { getSchedules, saveSchedule, deleteSchedule } from '../utils/storage';
-import TimeSlotCard from '../components/TimeSlotCard';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Grid,
   Card,
   CardContent,
-  Button,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Box,
   Container,
-  CircularProgress,
   Alert,
-  Snackbar,
   CardHeader,
   Chip,
   Paper,
   Divider
 } from '@mui/material';
 import { format, isSameDay } from 'date-fns';
+import BookingDialog from '../components/BookingDialog';
+import TimeSlotCard from '../components/TimeSlotCard';
 
 function Home() {
-  // ... existing state declarations ...
+  const navigate = useNavigate();
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    name: '',
+    studentNumber: '',
+    company: '',
+    notes: '',
+  });
+  const [bookings, setBookings] = useState([]);
+
+  // Load bookings from GitHub on component mount
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const savedBookings = await getSchedules();
+        setBookings(savedBookings.map(booking => ({
+          ...booking,
+          date: new Date(booking.date)
+        })));
+      } catch (error) {
+        console.error('Error loading bookings:', error);
+      }
+    };
+    fetchBookings();
+  }, []);
+
+  // Define the three weeks
+  const weeks = [
+    { sat: new Date('2025-01-25'), sun: new Date('2025-01-26') },
+    { sat: new Date('2025-02-01'), sun: new Date('2025-02-02') },
+    { sat: new Date('2025-02-08'), sun: new Date('2025-02-09') },
+  ];
+
+  // Generate time slots for a selected date
+  const generateTimeSlots = (date) => {
+    if (!date) return [];
+    
+    const slots = [];
+    let currentTime = new Date(date);
+    
+    // Morning slots (9:10 AM - 1:00 PM)
+    currentTime.setHours(9, 10, 0);
+    while (currentTime.getHours() < 13) {
+      const slotTime = new Date(currentTime);
+      const existingBooking = bookings.find(
+        booking => booking.date.getTime() === slotTime.getTime()
+      );
+      
+      slots.push({
+        time: slotTime,
+        available: !existingBooking,
+        booking: existingBooking,
+      });
+      currentTime.setMinutes(currentTime.getMinutes() + 25);
+    }
+
+    // Afternoon slots (2:10 PM - 5:00 PM)
+    currentTime.setHours(14, 10, 0);
+    while (currentTime.getHours() < 17) {
+      const slotTime = new Date(currentTime);
+      const existingBooking = bookings.find(
+        booking => booking.date.getTime() === slotTime.getTime()
+      );
+      
+      slots.push({
+        time: slotTime,
+        available: !existingBooking,
+        booking: existingBooking,
+      });
+      currentTime.setMinutes(currentTime.getMinutes() + 25);
+    }
+
+    return slots;
+  };
+
+  const getAvailableSlotCount = (date) => {
+    const daySlots = generateTimeSlots(date);
+    return daySlots.filter(slot => slot.available).length;
+  };
+
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+  };
+
+  const handleSlotSelect = (slot) => {
+    if (slot.available) {
+      setSelectedSlot(slot);
+      setOpenDialog(true);
+    }
+  };
+
+  const handleBookingSubmit = async () => {
+    if (!bookingForm.name || !bookingForm.studentNumber) {
+      return;
+    }
+    
+    const bookingCode = Math.floor(1000 + Math.random() * 9000);
+    const newBooking = {
+      ...bookingForm,
+      date: selectedSlot.time,
+      referenceCode: bookingCode,
+    };
+
+    try {
+      const updatedBookings = await saveSchedule(newBooking);
+      setBookings(updatedBookings.map(booking => ({
+        ...booking,
+        date: new Date(booking.date)
+      })));
+      
+      navigate('/booking-confirmation', {
+        state: {
+          booking: newBooking,
+        },
+      });
+
+      setOpenDialog(false);
+      setBookingForm({
+        name: '',
+        studentNumber: '',
+        company: '',
+        notes: '',
+      });
+    } catch (error) {
+      console.error('Error saving booking:', error);
+    }
+  };
+
+  const slots = generateTimeSlots(selectedDate);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -48,7 +172,6 @@ function Home() {
         </Typography>
       </Box>
 
-      {/* Week Selection */}
       <Grid container spacing={3} sx={{ mb: 6 }}>
         {weeks.map((week, index) => (
           <Grid item xs={12} md={4} key={index}>
@@ -115,7 +238,6 @@ function Home() {
         ))}
       </Grid>
 
-      {/* Time Slots */}
       {selectedDate && (
         <Box sx={{ mt: 4 }}>
           <Box sx={{ mb: 4 }}>
@@ -139,23 +261,14 @@ function Home() {
         </Box>
       )}
 
-      {/* Booking Dialog - Keep existing dialog code */}
-      
-      {/* Add Snackbar for feedback */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert 
-          severity={snackbar.severity} 
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          elevation={6}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      <BookingDialog 
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        selectedSlot={selectedSlot}
+        bookingForm={bookingForm}
+        setBookingForm={setBookingForm}
+        onSubmit={handleBookingSubmit}
+      />
     </Container>
   );
 }
