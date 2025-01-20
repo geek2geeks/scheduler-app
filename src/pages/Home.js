@@ -18,7 +18,7 @@ import {
   Alert,
   Zoom,
 } from '@mui/material';
-import { format, addWeeks, isSameDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
@@ -53,8 +53,7 @@ function Home() {
     }
   }, []);
 
-  // Generate the three weeks starting from Jan 25
-  const startDate = new Date('2025-01-25');
+  // Define the three weeks
   const weeks = [
     { sat: new Date('2025-01-25'), sun: new Date('2025-01-26') },
     { sat: new Date('2025-02-01'), sun: new Date('2025-02-02') },
