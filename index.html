@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Scheduler</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>MBA Presentation Scheduler</h1>
+        <div id="scheduler" class="scheduler-grid"></div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmationModal" class="modal">
+            <div class="modal-content">
+                <h2>Confirm Booking</h2>
+                <p>Would you like to book this time slot?</p>
+                <p id="selectedSlot"></p>
+                <div class="modal-buttons">
+                    <button id="confirmBooking" class="btn-confirm">Confirm</button>
+                    <button id="cancelBooking" class="btn-cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="modal">
+            <div class="modal-content">
+                <h2>Booking Successful!</h2>
+                <p>Your presentation has been scheduled.</p>
+                <button id="closeSuccess" class="btn-confirm">Close</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
