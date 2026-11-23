@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../components/Header';
 import TimeSlotCard from '../components/TimeSlotCard';
 import BookingDialog from '../components/BookingDialog';
-import { CircularProgress, Snackbar } from '@mui/material';
 import { getSchedules, saveSchedule, deleteSchedule } from '../utils/storage';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,21 +11,18 @@ import {
   Box,
   Container,
   Alert,
-  CardHeader,
   Chip,
   Paper,
   Divider,
-  Fade,
-  IconButton,
   Zoom,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  TextField,
-  CheckCircleOutlineIcon
+  TextField
 } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { format, isSameDay } from 'date-fns';
 
 function Home() {
